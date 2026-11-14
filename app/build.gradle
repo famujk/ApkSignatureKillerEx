@@ -1,53 +1,27 @@
-plugins {
-    id 'com.android.application'
-}
+name: Build APK
+on: [push]
 
-android {
-    namespace 'bin.mt.test'
-    compileSdk 32
-    ndkVersion '24.0.8215888'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-    defaultConfig {
-        applicationId "bin.mt.signature"
-        minSdk 21
-        //noinspection OldTargetApi
-        targetSdk 32
-        versionCode 1
-        versionName "1.0"
-        externalNativeBuild {
-            cmake {
-                cppFlags ""
-                abiFilters = ["armeabi-v7a", "x86", "arm64-v8a", "x86_64"]
-            }
-        }
-        ndk {
-            abiFilters = ["armeabi-v7a", "x86", "arm64-v8a", "x86_64"]
-        }
-    }
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
 
-    signingConfigs {
-        debug {
-            storeFile file("../fake.jks")
-            storePassword "123456"
-            keyAlias "key0"
-            keyPassword "123456"
-            v1SigningEnabled true
-            v2SigningEnabled true
-        }
-    }
+      - name: Make Gradle Executable
+        run: chmod +x gradlew
 
-    externalNativeBuild {
-        cmake {
-            path "CMakeLists.txt"
-        }
-    }
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug
 
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
-}
-
-dependencies {
-    implementation project(path: ':killer')
-}
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
